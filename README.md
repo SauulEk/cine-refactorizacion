@@ -37,3 +37,64 @@ __Main__ es el ejemplo de uso. Crea una función y dos reservas, una para Ana y 
 | 13 | Downcast repetido | `SistemaReservas.java` | `(Reserva) db.get(id)` | Encapsulate downcast |
 | 14 | Códigos de error numéricos | `SistemaReservas.java` | `return -1`, `-2`, `-3` | Replace error code with exception |
 | 15 | Control de flujo con excepciones | `SistemaReservas.java` | `try { f.ocupar(...) } catch (IllegalStateException e)` | Replace exception with test |
+
+
+---
+
+## Refactorización aplicada
+
+Cada cambio está marcado en el código con `// TÉCNICA UTILIZADA: ...` y, debajo, `// REFACTOR: Al aplicar esta técnica se realizaron los siguientes cambios...`.
+
+| # | Técnica | Dónde se aplicó | Cambio realizado |
+|---|---|---|---|
+| 1 | Rename method | `SistemaReservas` | `hacer` → `crearReserva`, `buscar` → `buscarReserva`, `cancelar` → `cancelarReserva` (nombres que dicen qué hacen y son consistentes entre sí) |
+| 2 | Remove parameter | `SistemaReservas.crearReserva` | Se eliminó `boolean imprimir` (nunca se usaba) |
+| 3 | Add parameter | `Reserva` | El constructor recibe `canal` y lo guarda (`getCanal()`); antes el dato se perdía |
+| 4 | Preserve whole object | `SistemaReservas.crearReserva` | Recibe `Cliente` completo en lugar de `nombre, email, socio` |
+| 5 | Introduce parameter object | Nueva clase `Asiento` | Sustituye los arrays paralelos `char[] filas, int[] numeros` por `List<Asiento>` |
+| 6 | Replace parameter with method | `SistemaReservas.calcularPrecio` | Se quitó `String tipo`; el método lo obtiene con `cliente.esSocio()` |
+| 7 | Replace parameter with explicit methods | `SistemaReservas` | `calcularPrecioGeneral(base)` y `calcularPrecioSocio(base)` en lugar de comparar `"general"` / `"socio"` |
+| 8 | Parameterize method | `SistemaReservas.aplicarDescuento` | `descuentoDel15` y `descuentoDel25` se unen en `aplicarDescuento(precio, porcentaje)` |
+| 9 | Separate query from modifier | `Funcion` | `ocupar()` se divide en `estaOcupado(asiento)` (consulta) y `ocupar(asiento)` (modificación) |
+| 10 | Hide method | `Funcion`, `SistemaReservas` | `ocupados`, `db` y `contador` pasan a `private`; métodos auxiliares de precio/validación pasan a `private`; `getOcupados()` devuelve lista no modificable |
+| 11 | Remove setting method | `Funcion` | Se eliminó `setPrecio(double)`; `precio` es `final` |
+| 12 | Remove setting method | `Reserva` | `setCancelada(boolean)` → operación `cancelar()` |
+| 13 | Encapsulate downcast | `SistemaReservas` | Mapa tipado `Map<Integer, Reserva>`; `buscarReserva(id)` devuelve `Reserva`; desaparece el casteo en `cancelarReserva` y en `Main` |
+| 14 | Replace error code with exception | `SistemaReservas`, nueva clase `ReservaException` | Ya no se devuelven `-1`, `-2`, `-3` ni `null`; se lanza `ReservaException` con un mensaje descriptivo |
+| 15 | Replace exception with test | `SistemaReservas.validarDisponibilidad` | Se quitó el `try/catch (IllegalStateException)`; se pregunta antes con `funcion.estaOcupado(asiento)` |
+
+### Corrección del bug de asientos bloqueados
+
+`crearReserva` primero valida que **todos** los asientos estén libres y solo después los ocupa. Si alguno está ocupado, no se marca ninguno. Por eso F7 ya no queda bloqueado cuando falla la reserva de Luis.
+
+### Decisiones de diseño adicionales
+
+- **Precio en el constructor de `Reserva`:** el precio se calcula antes de crear la reserva y se pasa al constructor, así `Reserva` no necesita setter ni campo público de precio (misma idea que *Remove setting method*). Por eso `calcularPrecio` recibe `Cliente, Funcion, List<Asiento>` en lugar de la `Reserva`.
+- **`Cliente` encapsulado:** al pasar el objeto completo (*Preserve whole object*), sus campos se hicieron `private final` con getters (`esSocio()` en vez de `socio`).
+- **Validación de asientos repetidos:** antes, pedir `F5, F5` fallaba por la excepción de `ocupar()`. Al separar consulta y modificación esa protección desaparecía, así que se agregó una validación explícita en `validarDatos`.
+- **`ReservaException` no comprobada:** extiende `RuntimeException` para no obligar a declarar `throws` en toda la cadena; `Main` la captura y muestra un error controlado.
+
+## Cómo compilar y ejecutar
+
+```bash
+javac *.java
+java Main
+```
+
+## Verificación
+
+`salida_antes.txt` es la salida del proyecto original y `salida_despues.txt` la del refactorizado.
+
+| Línea | Antes | Después |
+|---|---|---|
+| Reserva Ana | `1` | `1` (igual) |
+| Reserva Luis | `-3` | `Error - Asiento ocupado: F6` (error controlado) |
+| Ocupados | `[F5, F6, F7]` | `[F5, F6]` (bug corregido, F7 libre) |
+| Precio Ana (socio) | `20.4` | `20.4` (igual) |
+| Cancelar 1 | `0` | `OK` |
+| Cancelar 99 | `-1` | `Error - No existe la reserva con id 99` (error controlado) |
+
+## Diagramas de clase
+
+- Original: `diagramas/diagrama_original.png` (fuente: `diagrama_original.mmd`)
+- Refactorizado: `diagramas/diagrama_refactorizado.png` (fuente: `diagrama_refactorizado.mmd`)

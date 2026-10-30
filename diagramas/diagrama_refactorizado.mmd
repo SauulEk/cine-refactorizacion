@@ -1,0 +1,103 @@
+---
+title: Diagrama de clases - Proyecto refactorizado
+---
+classDiagram
+    direction LR
+
+    class Main {
+        +main(String[] args)$ void
+        -reservar(SistemaReservas s, String etiqueta, Cliente cliente, Funcion funcion, List~Asiento~ asientos, String canal)$ void
+        -cancelar(SistemaReservas s, int id)$ void
+    }
+
+    class SistemaReservas {
+        -double DESCUENTO_SOCIO$
+        -Map~Integer, Reserva~ reservas
+        -int contador
+        +crearReserva(Cliente cliente, Funcion funcion, List~Asiento~ asientos, String canal) int
+        +cancelarReserva(int id) void
+        +buscarReserva(int id) Reserva
+        -validarDatos(Cliente cliente, Funcion funcion, List~Asiento~ asientos) void
+        -validarDisponibilidad(Funcion funcion, List~Asiento~ asientos) void
+        -calcularPrecio(Cliente cliente, Funcion funcion, List~Asiento~ asientos) double
+        -calcularPrecioGeneral(double base) double
+        -calcularPrecioSocio(double base) double
+        -aplicarDescuento(double precio, double porcentaje) double
+    }
+
+    class Cliente {
+        -String nombre
+        -String email
+        -boolean socio
+        +Cliente(String nombre, String email, boolean socio)
+        +getNombre() String
+        +getEmail() String
+        +esSocio() boolean
+    }
+
+    class Asiento {
+        -char fila
+        -int numero
+        +Asiento(char fila, int numero)
+        +getFila() char
+        +getNumero() int
+        +getCodigo() String
+        +equals(Object o) boolean
+        +hashCode() int
+        +toString() String
+    }
+
+    class Funcion {
+        -String titulo
+        -int sala
+        -String hora
+        -double precio
+        -List~String~ ocupados
+        +Funcion(String titulo, int sala, String hora, double precio)
+        +getTitulo() String
+        +getSala() int
+        +getHora() String
+        +getPrecio() double
+        +getOcupados() List~String~
+        +estaOcupado(Asiento asiento) boolean
+        +ocupar(Asiento asiento) void
+        +liberar(Asiento asiento) void
+    }
+
+    class Reserva {
+        -int id
+        -Cliente cliente
+        -Funcion funcion
+        -List~Asiento~ asientos
+        -String canal
+        -double precio
+        -boolean cancelada
+        +Reserva(int id, Cliente cliente, Funcion funcion, List~Asiento~ asientos, String canal, double precio)
+        +getId() int
+        +getCliente() Cliente
+        +getFuncion() Funcion
+        +getAsientos() List~Asiento~
+        +getCanal() String
+        +getPrecio() double
+        +estaCancelada() boolean
+        +cancelar() void
+    }
+
+    class ReservaException {
+        +ReservaException(String mensaje)
+    }
+
+    class RuntimeException
+
+    Main ..> SistemaReservas : usa
+    Main ..> Cliente : crea
+    Main ..> Asiento : crea
+    Main ..> Funcion : crea
+    Main ..> ReservaException : captura
+    SistemaReservas "1" o-- "*" Reserva : reservas
+    SistemaReservas ..> ReservaException : lanza
+    Reserva "*" --> "1" Cliente
+    Reserva "*" --> "1" Funcion
+    Reserva "1" *-- "1..*" Asiento
+    Funcion ..> Asiento : usa
+    RuntimeException <|-- ReservaException
