@@ -1,0 +1,57 @@
+---
+title: Diagrama de clases - Proyecto original
+---
+classDiagram
+    direction LR
+
+    class Main {
+        +main(String[] args)$ void
+    }
+
+    class SistemaReservas {
+        +Map~Integer, Object~ db
+        +int contador
+        +hacer(String nombre, String email, boolean socio, Funcion f, char[] filas, int[] numeros, boolean imprimir, String canal) int
+        +calcularPrecio(Reserva r, String tipo) double
+        +descuentoDel15(double p) double
+        +descuentoDel25(double p) double
+        +cancelar(int id) int
+        +buscar(int id) Object
+    }
+
+    class Cliente {
+        +String nombre
+        +String email
+        +boolean socio
+        +Cliente(String nombre, String email, boolean socio)
+    }
+
+    class Funcion {
+        +String titulo
+        +int sala
+        +String hora
+        +double precio
+        +List~String~ ocupados
+        +Funcion(String titulo, int sala, String hora, double precio)
+        +ocupar(char fila, int numero) void
+        +setPrecio(double precio) void
+    }
+
+    class Reserva {
+        +int id
+        +Cliente cliente
+        +Funcion funcion
+        +List~String~ asientos
+        +double precio
+        +boolean cancelada
+        +Reserva(int id, Cliente cliente, Funcion funcion, List~String~ asientos)
+        +setCancelada(boolean cancelada) void
+    }
+
+    Main ..> SistemaReservas : usa
+    Main ..> Funcion : crea
+    Main ..> Reserva : castea
+    SistemaReservas "1" o-- "*" Reserva : db (Object)
+    SistemaReservas ..> Cliente : crea
+    Reserva "*" --> "1" Cliente
+    Reserva "*" --> "1" Funcion
